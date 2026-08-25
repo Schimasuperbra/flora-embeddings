@@ -17,6 +17,9 @@ Four model configurations are compared following the manuscript: EBPMF(EMB) EBPM
 
 The notebooks read data with paths **relative to the repository root**, so run everything from the project root directory (the only exception is the BHPMF step, which is run from inside `R/`; see below).
 
+The data associated with this project have been deposited at: https://doi.org/10.5281/zenodo.22092578
+
+
 ```
 S1_supplementary_code/
 ├── encoder.py                            # generate flora-description embeddings
@@ -65,10 +68,6 @@ All of these live in `data/`.
 | `flora_with_higher_taxaall.csv` | Higher-taxonomy lookup (order / family / genus) for species in the collection. |
 | `flora_emb_multilingual_0617_with_metadata.npz` | Precomputed flora-description embeddings plus species names (output of `encoder.py`). Load with `np.load(path, allow_pickle=True)["embeddings"]`. |
 
-`flora_3in1_1103_dirty.csv` and `appendix4_flora_traits.xlsx` originate from Sun et al., 2026.
-
-On the word **`dirty`** in some filenames: this label is kept only for consistency with the original working files and does **not** mean the files are unusable — they are the expected inputs of the workflow.
-
 ---
 
 ## Main code files
@@ -104,26 +103,6 @@ Run `encoder.py` from the repository root:
 
 ```
 python encoder.py
-```
-
----
-
-## The RQ3 trait networks (`R/create_networks.R`) in detail
-
-The script is built on the network code written by M. Baldo for this project and keeps his method unchanged: the edges are the **signed Gram matrix** of the trait profiles (no cosine, no Bray-Curtis, no row normalisation), Louvain is run on the absolute weights with the signs restored afterwards for display only, and no dendrogram is used. The layout, hull, edge and node styling, and the node-level statistics (`degree`, `strength`, `mean_strength`, `betweenness` with weights `1/|w|`, `closeness`, `eigenvector`) are taken over as written.
-
-Three things are deliberately different from that original script, and are documented here because they affect the published numbers:
-
-1. **Top-k selection over both endpoints.** The original kept, for each trait, its five strongest edges *among the partners whose name sorts after it* (`filter(from < to)` followed by `group_by(from)`), which makes a trait's displayed neighbourhood depend on its name. Here each node keeps its `TOP_K` strongest links regardless of endpoint order, so `degree`, `strength` and the centralities no longer depend on the alphabet.
-2. **All 42 traits are retained as vertices**, including any that end up with no retained edge, so the node table always aligns row-for-row with the per-trait results.
-3. **A second basis is computed.** The profile matrix P is the only quantity that differs between the two runs: `basis_VV` uses P = V (the original choice, latent metric I) and `basis_VW` uses P = V W (latent metric W Wᵀ). Everything downstream is identical, so any difference between the two outputs is attributable to the basis alone. **The figures reported in the chapter use `basis_VW`** (`BASIS = 'VW'` in the visualisation notebook).
-
-Configuration lives at the top of the file: `MODEL <- "emb"`, `BASES <- c("VV", "VW")`, `TOP_K <- 5`, and a `setwd()` line that must be pointed at your local repository root. A complete run writes eight files to `outputs/`:
-
-```
-network_nodes_gram_emb_VV.csv     network_edges_gram_emb_VV.csv     trait_network_gram_emb_VV.pdf
-network_nodes_gram_emb_VW.csv     network_edges_gram_emb_VW.csv     trait_network_gram_emb_VW.pdf
-network_compare_emb_VV_vs_VW.csv
 ```
 
 ---
